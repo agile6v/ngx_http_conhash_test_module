@@ -26,6 +26,7 @@ conhash_test_zone
 * **context**: `main`
 
 Sets the share memory name、share memory size and vnode count of the consistent hash.
+
 NOTE: If you want to use the [ngx_consistent_hash][] module must be defined in a similar directive.
 
 Testing
