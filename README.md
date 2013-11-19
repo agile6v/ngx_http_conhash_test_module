@@ -1,7 +1,7 @@
 About
 ========
 
-This module for test the ngx_consistent_hash api,  which is based on ngx_consistent_hash module.
+This module for test the [ngx_consistent_hash][] api,  which is based on ngx_consistent_hash module.
 
 
 Configuration
@@ -75,5 +75,5 @@ See also
 ========
 * [ngx_consistent_hash][]
 
-[ngx_consistent_hash]: https://github.com/agile6v/ngx_consistent_hash)
+[ngx_consistent_hash]: https://github.com/agile6v/ngx_consistent_hash
 
