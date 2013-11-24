@@ -62,42 +62,46 @@ Testing
 ========
 
 ```bash
-add:       curl -s "http://127.0.0.1/conhash?key=1&value=nodeA"
-del:       curl -s "http://127.0.0.1/conhash?key=2&value=nodeA"
-search:    curl -s "http://127.0.0.1/conhash?key=3&value=agile6v"
-traverse:  curl -s "http://127.0.0.1/conhash?key=4"
+add:       curl -s "http://127.0.0.1/conhash?cmd=1&value=nodeA"
+del:       curl -s "http://127.0.0.1/conhash?cmd=2&value=nodeA"
+search:    curl -s "http://127.0.0.1/conhash?cmd=3&value=agile6v"
+traverse:  curl -s "http://127.0.0.1/conhash?cmd=4"
+clear:     curl -s "http://127.0.0.1/conhash?cmd=5"
 
 ### add node A
-$ curl -s "http://127.0.0.1/conhash?key=1&value=A"
+$ curl -s "http://127.0.0.1/conhash?cmd=1&value=A"
 Add node successfully!
 
 ### add node B
-$ curl -s "http://127.0.0.1/conhash?key=1&value=B"
+$ curl -s "http://127.0.0.1/conhash?cmd=1&value=B"
 Add node successfully!
 
 ### traverse vnode
-$ curl -s "http://127.0.0.1/conhash?key=4" -o vnode.txt
+$ curl -s "http://127.0.0.1/conhash?cmd=4" -o vnode.txt
 $ cat vnode.txt
 
 ### search node
-$ curl -s "http://127.0.0.1/conhash?key=3&value=agile6v"
+$ curl -s "http://127.0.0.1/conhash?cmd=3&value=agile6v"
 agile6v(317471105) is in the node B(B-0599, 321124292)
 
 ### del node B
-$ curl -s "http://127.0.0.1/conhash?key=2&value=B"
+$ curl -s "http://127.0.0.1/conhash?cmd=2&value=B"
 Delete node successfully!
 
 ### search node
-$ curl -s "http://127.0.0.1/conhash?key=3&value=agile6v"
+$ curl -s "http://127.0.0.1/conhash?cmd=3&value=agile6v"
 agile6v(317471105) is in the node A(A-0442, 322085099)
 
 ### add node B
-$ curl -s "http://127.0.0.1/conhash?key=1&value=B"
+$ curl -s "http://127.0.0.1/conhash?cmd=1&value=B"
 Add node successfully!
 
 ### search node
-$ curl -s "http://127.0.0.1/conhash?key=3&value=agile6v"
+$ curl -s "http://127.0.0.1/conhash?cmd=3&value=agile6v"
 agile6v(317471105) is in the node B(B-0599, 321124292)
+
+### clear all nodes
+$ curl -s "http://127.0.0.1/conhash?cmd=5"
 
 ```
 
