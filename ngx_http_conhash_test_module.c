@@ -8,15 +8,16 @@
 #include "ngx_consistent_hash.h"
 
 /*
- *  1 = add             curl -s "http://127.0.0.1/test?key=1&value=xxxxx"
- *  2 = del             curl -s "http://127.0.0.1/test?key=2&value=xxxxx"
- *  3 = search          curl -s "http://127.0.0.1/test?key=3&value=agile6v"
- *  4 = traverse        curl -s "http://127.0.0.1/test?key=4"
+ *  1 = add             curl -s "http://127.0.0.1/conhash?cmd=1&value=nodeA"
+ *  2 = del             curl -s "http://127.0.0.1/conhash?cmd=2&value=nodeA"
+ *  3 = search          curl -s "http://127.0.0.1/conhash?cmd=3&value=agile6v"
+ *  4 = traverse        curl -s "http://127.0.0.1/conhash?cmd=4"
+ *  5 = clear           curl -s "http://127.0.0.1/conhash?cmd=5"
  */
 
 ngx_module_t  ngx_http_conhash_test_module;
  
-#define     KEY_STR          "key"
+#define     KEY_STR          "cmd"
 #define     VALUE_STR        "value"
 #define     BRACKET_L        "("
 #define     BRACKET_R        ")"
@@ -31,6 +32,7 @@ static ngx_int_t ngx_http_conhash_test_add(ngx_http_request_t *r, ngx_conhash_t 
 static ngx_int_t ngx_http_conhash_test_del(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_chain_t *out);
 static ngx_int_t ngx_http_conhash_test_search(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_chain_t *out);
 static ngx_int_t ngx_http_conhash_test_traverse(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_chain_t *out);
+static ngx_int_t ngx_http_conhash_test_clear(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_chain_t *out);
 
 static void ngx_http_conhash_test_make_len(ngx_conhash_vnode_t *vnode, void *data);
 static void ngx_http_conhash_test_make_data(ngx_conhash_vnode_t *vnode, void *data);
@@ -134,6 +136,9 @@ ngx_http_conhash_test_handler(ngx_http_request_t *r)
         case 4:         //  traverse
             rc = ngx_http_conhash_test_traverse(r, conhash, &out);
             break;
+        case 5:         //  clear
+            rc = ngx_http_conhash_test_clear(r, conhash, &out);
+            break;
     }
     
     if (rc != NGX_OK) {
@@ -214,7 +219,7 @@ ngx_http_conhash_test_add(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_cha
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    rc = ngx_conhash_add_node(conhash, value.data, value.len);
+    rc = ngx_conhash_add_node(conhash, value.data, value.len, NULL);
     if (rc == NGX_OK) {
         b->last = ngx_sprintf(b->last, "Add node successfully!" CRLF);
     }
@@ -358,6 +363,14 @@ done:
 
     b->last_buf = 1;
     out->buf = b;
+    
+    return NGX_OK;
+}
+
+static ngx_int_t 
+ngx_http_conhash_test_clear(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_chain_t *out)
+{
+    ngx_conhash_clear(conhash);
     
     return NGX_OK;
 }
