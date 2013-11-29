@@ -329,6 +329,8 @@ ngx_http_conhash_test_traverse(ngx_http_request_t *r, ngx_conhash_t *conhash, ng
     ngx_buf_t            *b;
     ngx_int_t             rc;
     
+    len = 0;
+    
     rc = ngx_conhash_node_traverse(conhash, ngx_http_conhash_test_make_len, &len);
     if (rc == NGX_DECLINED) {
     
