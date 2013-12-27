@@ -36,8 +36,16 @@ static ngx_int_t ngx_http_conhash_test_clear(ngx_http_request_t *r, ngx_conhash_
 
 static void ngx_http_conhash_test_make_len(ngx_conhash_vnode_t *vnode, void *data);
 static void ngx_http_conhash_test_make_data(ngx_conhash_vnode_t *vnode, void *data);
+static void ngx_http_conhash_test_get_data(ngx_conhash_vnode_t *vnode, void *data);
 
 ngx_conhash_ctx_t ngx_http_conhash_test_ctx = {NULL, &ngx_http_conhash_test_module};
+    
+typedef struct {
+    ngx_rbtree_node_t       key;
+    ngx_str_t               name;           //  hnode name
+    ngx_str_t               vname;          //  vnode name
+    ngx_pool_t             *pool;
+} ngx_http_conhash_test_node_name_t;
     
 typedef struct {
     ngx_conhash_t           *conhash;
@@ -278,18 +286,21 @@ ngx_http_conhash_test_search(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_
 {
     ngx_str_t                            value;
     ngx_int_t                            rc;
-    ngx_conhash_vnode_t                 *vnode;
     size_t                               len;
     ngx_buf_t                           *b;
     ngx_rbtree_key_t                     key;
+    ngx_http_conhash_test_node_name_t    node;
 
     rc = ngx_http_arg(r, (u_char *) VALUE_STR, sizeof(VALUE_STR) - 1, &value);
     if (rc != NGX_OK) {
         return rc;
     }
     
-    vnode = ngx_conhash_lookup_node(conhash, value.data, value.len);
-    if (vnode == NULL) {
+    ngx_memzero(&node, sizeof(ngx_http_conhash_test_node_name_t));
+    node.pool = r->pool;
+    
+    rc = ngx_conhash_lookup_node(conhash, value.data, value.len, ngx_http_conhash_test_get_data, &node);
+    if (rc != NGX_OK) {
         b = ngx_create_temp_buf(r->pool, 1024);
         if (b == NULL) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -300,8 +311,12 @@ ngx_http_conhash_test_search(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_
         goto done;
     }
     
+    if (node.vname.data == NULL || node.name.data == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+    
     len = value.len + sizeof(BRACKET_L) - 1 + NGX_OFF_T_LEN + sizeof(PROMPT_STR) - 1 + 
-          ngx_strlen(vnode->hnode->name) + sizeof(BRACKET_L) - 1 + vnode->name.len + 
+          node.name.len + sizeof(BRACKET_L) - 1 + node.vname.len + 
           sizeof(COMMA_STR) - 1 + NGX_OFF_T_LEN + sizeof(BRACKET_R) - 1 + sizeof(CRLF) - 1;
     
     b = ngx_create_temp_buf(r->pool, len);
@@ -311,8 +326,8 @@ ngx_http_conhash_test_search(ngx_http_request_t *r, ngx_conhash_t *conhash, ngx_
     
     key = conhash->hash_func(value.data, value.len);
     
-    b->last = ngx_sprintf(b->last, "%V" BRACKET_L "%ui" PROMPT_STR "%s" BRACKET_L "%V" COMMA_STR "%ui"\
-                BRACKET_R CRLF, &value, key, vnode->hnode->name, &vnode->name, vnode->node.key);
+    b->last = ngx_sprintf(b->last, "%V" BRACKET_L "%ui" PROMPT_STR "%V" BRACKET_L "%V" COMMA_STR "%ui"\
+                BRACKET_R CRLF, &value, key, &node.name, &node.vname, node.key);
 
 done:
 
@@ -394,3 +409,29 @@ ngx_http_conhash_test_make_data(ngx_conhash_vnode_t *vnode, void *data)
     b->last = ngx_sprintf(b->last, "%V" BRACKET_L "%ui" BRACKET_R CRLF, &vnode->name, vnode->node.key);
 }
 
+static void 
+ngx_http_conhash_test_get_data(ngx_conhash_vnode_t *vnode, void *data)
+{
+    ngx_http_conhash_test_node_name_t *node = data;
+    u_char *p;
+    
+    node->name.len = vnode->hnode->name.len;
+    node->name.data = ngx_pcalloc(node->pool, node->name.len + 1);
+    if (node->name.data == NULL) {
+        return;
+    }
+    
+    p = ngx_cpymem(node->name.data, vnode->hnode->name.data, node->name.len);
+    *p = '\0';
+    
+    node->vname.len = vnode->name.len;
+    node->vname.data = ngx_pcalloc(node->pool, node->vname.len + 1);
+    if (node->vname.data == NULL) {
+        return;
+    }
+    
+    p = ngx_cpymem(node->vname.data, vnode->name.data, node->vname.len);
+    *p = '\0';
+    
+    node->key = vnode->node;
+}
